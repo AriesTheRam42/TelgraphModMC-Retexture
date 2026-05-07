@@ -1,7 +1,21 @@
 {
-  "parent": "minecraft:block/cube_column",
-  "textures": {
-    "end": "minecraft:block/oak_log_top",
-    "side": "minecraft:block/oak_log"
-  }
+	"textures": {
+		"0": "telegraph:block/telegraph_pole_texture",
+		"particle": "telegraph:block/telegraph_pole_texture"
+	},
+	"elements": [
+		{
+			"from": [5, 0, 5],
+			"to": [11, 16, 11],
+			"rotation": {"angle": 0, "axis": "y", "origin": [4, 0, 6]},
+			"faces": {
+				"north": {"uv": [0, 0, 9, 16], "texture": "#0"},
+				"east": {"uv": [0, 0, 9, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 9, 16], "texture": "#0"},
+				"west": {"uv": [0, 0, 9, 16], "texture": "#0"},
+				"up": {"uv": [9, 0, 16, 7], "texture": "#0"},
+				"down": {"uv": [9, 7, 16, 14], "texture": "#0"}
+			}
+		}
+	]
 }

@@ -1,1 +1,3 @@
-{ "parent": "telegraph:block/relay_station" }
+{
+  "parent": "telegraph:block/relay_station"
+}

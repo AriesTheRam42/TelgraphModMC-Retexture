@@ -18,6 +18,14 @@
     {
       "when": { "west": true },
       "apply": { "model": "telegraph:block/cable_block_side", "y": 270, "uvlock": true }
+    },
+    {
+      "when": { "up": true },
+      "apply": { "model": "telegraph:block/cable_block_side", "x": 270, "uvlock": true }
+    },
+    {
+      "when": { "down": true },
+      "apply": { "model": "telegraph:block/cable_block_side", "x": 90, "uvlock": true }
     }
   ]
 }

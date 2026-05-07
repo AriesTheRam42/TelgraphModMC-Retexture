@@ -1,4 +1,67 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": { "all": "minecraft:block/iron_block" }
+	"credit": "Made with Blockbench",
+	"texture_size": [64, 64],
+	"textures": {
+		"0": "telegraph:block/relay_station_texture",
+		"particle": "telegraph:block/relay_station_texture"
+	},
+	"elements": [
+		{
+			"from": [0, 6, 0],
+			"to": [16, 8, 9],
+			"faces": {
+				"north": {"uv": [8, 3.5, 12, 4], "texture": "#0"},
+				"east": {"uv": [8, 7, 10.25, 7.5], "texture": "#0"},
+				"south": {"uv": [8, 4, 12, 4.5], "texture": "#0"},
+				"west": {"uv": [8, 7.5, 10.25, 8], "texture": "#0"},
+				"up": {"uv": [8, 2.25, 4, 0], "texture": "#0"},
+				"down": {"uv": [8, 2.25, 4, 4.5], "texture": "#0"}
+			}
+		},
+		{
+			"from": [9, 6, 10],
+			"to": [14, 8, 15],
+			"faces": {
+				"north": {"uv": [7.5, 9, 8.75, 9.5], "texture": "#0"},
+				"east": {"uv": [8.75, 9, 10, 9.5], "texture": "#0"},
+				"south": {"uv": [9.25, 4.5, 10.5, 5], "texture": "#0"},
+				"west": {"uv": [9.25, 5, 10.5, 5.5], "texture": "#0"},
+				"up": {"uv": [9.25, 5.75, 8, 4.5], "texture": "#0"},
+				"down": {"uv": [9.25, 5.75, 8, 7], "texture": "#0"}
+			}
+		},
+		{
+			"from": [0, 6, 9],
+			"to": [7, 8, 16],
+			"faces": {
+				"north": {"uv": [8, 8, 9.75, 8.5], "texture": "#0"},
+				"east": {"uv": [8, 8.5, 9.75, 9], "texture": "#0"},
+				"south": {"uv": [4, 9, 5.75, 9.5], "texture": "#0"},
+				"west": {"uv": [5.75, 9, 7.5, 9.5], "texture": "#0"},
+				"up": {"uv": [9.75, 1.75, 8, 0], "texture": "#0"},
+				"down": {"uv": [9.75, 1.75, 8, 3.5], "texture": "#0"}
+			}
+		},
+		{
+			"from": [0, 0, 0],
+			"to": [16, 6, 16],
+			"faces": {
+				"north": {"uv": [4, 4.5, 8, 6], "texture": "#0"},
+				"east": {"uv": [4, 6, 8, 7.5], "texture": "#0"},
+				"south": {"uv": [4, 7.5, 8, 9], "texture": "#0"},
+				"west": {"uv": [0, 8, 4, 9.5], "texture": "#0"},
+				"up": {"uv": [4, 4, 0, 0], "texture": "#0"},
+				"down": {"uv": [4, 4, 0, 8], "texture": "#0"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "group",
+			"origin": [0, 0, 0],
+			"scope": 0,
+			"color": 0,
+			"children": [0, 1, 2, 3]
+		}
+	]
 }

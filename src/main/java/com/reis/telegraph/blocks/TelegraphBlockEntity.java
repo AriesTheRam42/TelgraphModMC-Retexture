@@ -32,6 +32,9 @@ public class TelegraphBlockEntity extends BlockEntity {
     public void setChannel(int channel) {
         this.channel = Math.max(0, Math.min(99, channel));
         setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     public List<ItemStack> getPendingItems() {
@@ -47,6 +50,9 @@ public class TelegraphBlockEntity extends BlockEntity {
         this.stationName = name.replaceAll("[^A-Za-z0-9 _\\-']", "")
                                .substring(0, Math.min(name.length(), 32));
         setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     public int getLastSignalQuality() {
@@ -56,6 +62,9 @@ public class TelegraphBlockEntity extends BlockEntity {
     public void setLastSignalQuality(int quality) {
         this.lastSignalQuality = Math.max(-1, Math.min(100, quality));
         setChanged();
+        if (level != null) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     /**
@@ -103,5 +112,22 @@ public class TelegraphBlockEntity extends BlockEntity {
                 pendingItems.add(stack);
             }
         }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag);
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket pkt) {
+        load(pkt.getTag());
     }
 }

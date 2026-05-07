@@ -1,5 +1,8 @@
 {
   "variants": {
-    "": { "model": "minecraft:block/observer" }
+    "facing=north": { "model": "telegraph:block/telegraph_machine" },
+    "facing=south": { "model": "telegraph:block/telegraph_machine", "y": 180 },
+    "facing=east": { "model": "telegraph:block/telegraph_machine", "y": 90 },
+    "facing=west": { "model": "telegraph:block/telegraph_machine", "y": 270 }
   }
 }
