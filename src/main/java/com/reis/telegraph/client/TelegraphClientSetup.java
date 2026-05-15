@@ -4,12 +4,12 @@ import com.reis.telegraph.gui.TelegraphReadScreen;
 import com.reis.telegraph.gui.TelegraphScreen;
 import com.reis.telegraph.items.TelegraphMessageItem;
 import com.reis.telegraph.network.packets.OpenGuiPacket;
-import com.reis.telegraph.registration.ModBlocks;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
+import com.reis.telegraph.registration.ModEntities;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
  * Client-only setup. Invoked via DistExecutor.safeRunWhenOn so the entire
@@ -20,21 +20,19 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 @OnlyIn(Dist.CLIENT)
 public class TelegraphClientSetup {
 
-    public static void init(final FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            OpenGuiPacket.clientScreenOpener = (pos, channel, stationName, quality) ->
-                    net.minecraft.client.Minecraft.getInstance()
-                            .setScreen(new TelegraphScreen(pos, channel, stationName, quality));
+    public static void init() {
+        OpenGuiPacket.clientScreenOpener = (pos, channel, stationName, quality) ->
+                net.minecraft.client.Minecraft.getInstance()
+                        .setScreen(new TelegraphScreen(pos, channel, stationName, quality));
 
-            TelegraphMessageItem.clientScreenOpener = stack ->
-                    net.minecraft.client.Minecraft.getInstance()
-                            .setScreen(new TelegraphReadScreen(stack));
+        TelegraphMessageItem.clientScreenOpener = stack ->
+                net.minecraft.client.Minecraft.getInstance()
+                        .setScreen(new TelegraphReadScreen(stack));
 
-            // Set render types for blocks with transparency/non-full models
-            // This prevents "black boxes" or "missing models" look on some server configurations
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CABLE_BLOCK.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.TELEGRAPH_POLE.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.INSULATOR.get(), RenderType.cutout());
-        });
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(TelegraphClientSetup::registerEntityRenderers);
+    }
+
+    private static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.DYNAMITE.get(), ThrownItemRenderer::new);
     }
 }

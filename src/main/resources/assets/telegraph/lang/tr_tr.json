@@ -1,22 +1,19 @@
 {
   "block.telegraph.telegraph_machine": "Telgraf Makinesi",
   "block.telegraph.cable_block": "Telgraf Kablosu",
-
   "item.telegraph.telegram": "Telgraf",
-
+  "item.telegraph.cable_cutter": "Cable Cutter",
   "itemGroup.telegraph": "Tarihi Telgraf",
-
   "gui.telegraph.title": "Telgraf",
   "gui.telegraph.message_placeholder": "Mesajinizi yazin...",
   "gui.telegraph.channel_label": "Kanal:",
   "gui.telegraph.send": "Gonder",
-
   "gui.telegraph.telegram_title": "Telgraf Mesaji",
   "gui.telegraph.from": "Kimden: %s",
   "gui.telegraph.channel": "Kanal: %d",
   "gui.telegraph.day": "%d. Gun",
-
   "message.telegraph.sent": "Mesaj gonderildi.",
   "message.telegraph.cooldown": "Tekrar gondermek icin %d saniye bekleyin.",
-  "message.telegraph.no_machines": "O kanalda makine bulunamadi."
+  "message.telegraph.no_machines": "O kanalda makine bulunamadi.",
+  "item.telegraph.dynamite": "Dinamit"
 }

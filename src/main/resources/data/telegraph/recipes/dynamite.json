@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    "PGP",
+    " K "
+  ],
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "S": {
+      "item": "minecraft:string"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "K": {
+      "item": "minecraft:sand"
+    }
+  },
+  "result": {
+    "item": "telegraph:dynamite",
+    "count": 1
+  }
+}

@@ -4,11 +4,9 @@
   "block.telegraph.relay_station": "Relay Station",
   "block.telegraph.telegraph_pole": "Telegraph Pole",
   "block.telegraph.insulator": "Insulator",
-
   "item.telegraph.telegram": "Telegram",
-
+  "item.telegraph.cable_cutter": "Cable Cutter",
   "itemGroup.telegraph": "Historical Telegraph",
-
   "gui.telegraph.title": "Telegraph",
   "gui.telegraph.message_placeholder": "Type your message...",
   "gui.telegraph.channel_label": "Channel:",
@@ -16,16 +14,15 @@
   "gui.telegraph.station_name_label": "Station:",
   "gui.telegraph.station_name_placeholder": "Station name...",
   "gui.telegraph.quality_label": "Signal: %d%%",
-
   "gui.telegraph.telegram_title": "Telegram",
   "gui.telegraph.from": "From: %s",
   "gui.telegraph.station": "Station: %s",
   "gui.telegraph.channel": "Channel: %d",
   "gui.telegraph.day": "Day %d",
-
   "message.telegraph.sent": "Message sent.",
   "message.telegraph.sent_quality": "Message sent. Signal quality: %d%%",
   "message.telegraph.cooldown": "Wait %d seconds before sending again.",
   "message.telegraph.no_machines": "No machines found on that channel.",
-  "message.telegraph.broken_line": "Signal too weak — message not delivered."
+  "message.telegraph.broken_line": "Signal too weak — message not delivered.",
+  "item.telegraph.dynamite": "Dynamite"
 }

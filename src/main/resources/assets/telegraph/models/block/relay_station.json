@@ -54,14 +54,5 @@
 				"down": {"uv": [4, 4, 0, 8], "texture": "#0"}
 			}
 		}
-	],
-	"groups": [
-		{
-			"name": "group",
-			"origin": [0, 0, 0],
-			"scope": 0,
-			"color": 0,
-			"children": [0, 1, 2, 3]
-		}
 	]
 }

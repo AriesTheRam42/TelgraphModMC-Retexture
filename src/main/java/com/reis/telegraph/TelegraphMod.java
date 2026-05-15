@@ -24,14 +24,17 @@ public class TelegraphMod {
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TelegraphConfig.SPEC);
 
-        // register client-only setup through the mod event bus
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> modEventBus.addListener(TelegraphClientSetup::init));
+        // safeRunWhenOn is processed by runtimedistcleaner — the TelegraphClientSetup
+        // reference is physically stripped from the server bytecode, preventing
+        // NoClassDefFoundError on Mohist and other dedicated server implementations.
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> TelegraphClientSetup::init);
 
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         ModSounds.SOUNDS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        ModEntities.ENTITIES.register(modEventBus);
         ModCreativeTab.CREATIVE_TABS.register(modEventBus);
 
         PacketHandler.register();

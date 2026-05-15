@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "telegraph:telegraph_machine",
+    "telegraph:cable_block",
+    "telegraph:relay_station",
+    "telegraph:telegraph_pole",
+    "telegraph:insulator"
+  ]
+}
