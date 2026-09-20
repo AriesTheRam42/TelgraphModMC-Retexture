@@ -1,6 +1,9 @@
 package com.reis.telegraph.gui;
 
+import com.reis.telegraph.network.TelegraphTarget;
 import net.minecraft.core.BlockPos;
+
+import java.util.List;
 
 /**
  * Common-side functional interface for opening the telegraph GUI screen.
@@ -10,5 +13,6 @@ import net.minecraft.core.BlockPos;
  */
 @FunctionalInterface
 public interface ScreenOpenCallback {
-    void open(BlockPos pos, int channel, String stationName, int quality);
+    void open(BlockPos pos, int channel, String stationName, int quality,
+              List<TelegraphTarget> targets);
 }

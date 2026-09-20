@@ -21,9 +21,9 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public class TelegraphClientSetup {
 
     public static void init() {
-        OpenGuiPacket.clientScreenOpener = (pos, channel, stationName, quality) ->
+        OpenGuiPacket.clientScreenOpener = (pos, channel, stationName, quality, targets) ->
                 net.minecraft.client.Minecraft.getInstance()
-                        .setScreen(new TelegraphScreen(pos, channel, stationName, quality));
+                        .setScreen(new TelegraphScreen(pos, channel, stationName, quality, targets));
 
         TelegraphMessageItem.clientScreenOpener = stack ->
                 net.minecraft.client.Minecraft.getInstance()

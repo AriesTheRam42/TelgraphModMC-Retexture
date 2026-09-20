@@ -5,13 +5,17 @@ import com.reis.telegraph.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TelegraphBlockEntity extends BlockEntity {
 
@@ -20,6 +24,11 @@ public class TelegraphBlockEntity extends BlockEntity {
     private static final int MAX_PENDING = 20;
     private String stationName = "";
     private int lastSignalQuality = -1; // -1 = never measured
+
+    /** Machines this one sends to. Only meaningful once routingConfigured is true. */
+    private final Set<BlockPos> selectedTargets = new HashSet<>();
+    /** False on a machine the player has never routed — such a machine still broadcasts. */
+    private boolean routingConfigured = false;
 
     public TelegraphBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TELEGRAPH_ENTITY.get(), pos, state);
@@ -46,6 +55,33 @@ public class TelegraphBlockEntity extends BlockEntity {
         if (name == null) name = "";
         this.stationName = name.replaceAll("[^A-Za-z0-9 _\\-']", "")
                                .substring(0, Math.min(name.length(), 32));
+        setChanged();
+    }
+
+    /**
+     * True if a message from this machine should reach the given target.
+     * A machine that has never been routed keeps the old broadcast behaviour,
+     * so existing worlds and freshly placed machines still work out of the box.
+     */
+    public boolean isTargetSelected(BlockPos target) {
+        return !routingConfigured || selectedTargets.contains(target);
+    }
+
+    public boolean isRoutingConfigured() {
+        return routingConfigured;
+    }
+
+    public Set<BlockPos> getSelectedTargets() {
+        return selectedTargets;
+    }
+
+    /** Replaces the routing selection; marks this machine as explicitly routed. */
+    public void setSelectedTargets(Collection<BlockPos> targets) {
+        selectedTargets.clear();
+        for (BlockPos pos : targets) {
+            selectedTargets.add(pos.immutable());
+        }
+        routingConfigured = true;
         setChanged();
     }
 
@@ -78,6 +114,13 @@ public class TelegraphBlockEntity extends BlockEntity {
         tag.putInt("Channel", channel);
         tag.putString("StationName", stationName);
         tag.putInt("LastSignalQuality", lastSignalQuality);
+        tag.putBoolean("RoutingConfigured", routingConfigured);
+
+        ListTag targetsTag = new ListTag();
+        for (BlockPos target : selectedTargets) {
+            targetsTag.add(LongTag.valueOf(target.asLong()));
+        }
+        tag.put("SelectedTargets", targetsTag);
 
         ListTag pendingTag = new ListTag();
         for (ItemStack stack : pendingItems) {
@@ -94,6 +137,14 @@ public class TelegraphBlockEntity extends BlockEntity {
         channel = tag.getInt("Channel");
         stationName = tag.getString("StationName"); // returns "" if absent — safe default
         lastSignalQuality = tag.contains("LastSignalQuality") ? tag.getInt("LastSignalQuality") : -1;
+
+        // Absent on machines saved before routing existed — they keep broadcasting.
+        routingConfigured = tag.getBoolean("RoutingConfigured");
+        selectedTargets.clear();
+        ListTag targetsTag = tag.getList("SelectedTargets", Tag.TAG_LONG);
+        for (int i = 0; i < targetsTag.size(); i++) {
+            selectedTargets.add(BlockPos.of(((LongTag) targetsTag.get(i)).getAsLong()));
+        }
 
         pendingItems.clear();
         ListTag pendingTag = tag.getList("PendingItems", Tag.TAG_COMPOUND);

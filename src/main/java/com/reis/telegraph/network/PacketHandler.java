@@ -4,6 +4,7 @@ import com.reis.telegraph.network.packets.OpenGuiPacket;
 import com.reis.telegraph.network.packets.SendMessagePacket;
 import com.reis.telegraph.network.packets.SetChannelPacket;
 import com.reis.telegraph.network.packets.SetStationNamePacket;
+import com.reis.telegraph.network.packets.SetTargetsPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -13,7 +14,9 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public class PacketHandler {
 
-    private static final String PROTOCOL_VERSION = "2";
+    // Bumped to 3 when the GUI gained per-recipient routing (OpenGuiPacket /
+    // SendMessagePacket payloads changed, SetTargetsPacket added).
+    private static final String PROTOCOL_VERSION = "3";
     public static SimpleChannel CHANNEL;
 
     public static void register() {
@@ -47,6 +50,12 @@ public class PacketHandler {
                 SetStationNamePacket::encode,
                 SetStationNamePacket::decode,
                 SetStationNamePacket::handle,
+                java.util.Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        CHANNEL.registerMessage(id++, SetTargetsPacket.class,
+                SetTargetsPacket::encode,
+                SetTargetsPacket::decode,
+                SetTargetsPacket::handle,
                 java.util.Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 

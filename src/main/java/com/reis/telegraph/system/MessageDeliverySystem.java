@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MessageDeliverySystem {
 
@@ -33,22 +34,39 @@ public class MessageDeliverySystem {
 
     private static final List<ScheduledDelivery> QUEUE = new ArrayList<>();
 
+    /** Broadcast to every connected machine on the channel (admin command path). */
+    public static int schedule(ServerLevel level, BlockPos senderPos,
+                                String message, String sender, String senderStation,
+                                int channel, long currentTick) {
+        return schedule(level, senderPos, message, sender, senderStation, channel, currentTick, null);
+    }
+
     /**
-     * Schedule delivery of a message to all machines connected to senderPos
+     * Schedule delivery of a message to the machines connected to senderPos
      * on the given channel, with a delay proportional to cable distance.
      * Quality-gated: messages on broken/extremely long lines may be dropped or delayed extra.
+     *
+     * @param allowedTargets when non-null, only these positions receive the message;
+     *                       null keeps the old broadcast-to-everyone behaviour.
+     * @return how many deliveries were queued, or -1 if there is not enough paper
      */
-    public static void schedule(ServerLevel level, BlockPos senderPos,
-                                 String message, String sender, String senderStation,
-                                 int channel, long currentTick) {
+    public static int schedule(ServerLevel level, BlockPos senderPos,
+                                String message, String sender, String senderStation,
+                                int channel, long currentTick, Set<BlockPos> allowedTargets) {
         Map<BlockPos, NetworkManager.NetworkPath> targets =
                 NetworkManager.findConnectedMachinesWithPaths(level, senderPos);
         LOGGER.debug("[Telegraph] schedule: BFS found {} machine(s) from {}", targets.size(), senderPos);
 
-        int scheduled = 0;
+        List<ScheduledDelivery> pending = new ArrayList<>();
         for (Map.Entry<BlockPos, NetworkManager.NetworkPath> entry : targets.entrySet()) {
             BlockPos targetPos = entry.getKey();
             if (targetPos.equals(senderPos)) continue; // skip sender machine
+
+            // Honour the sender's recipient selection before anything else
+            if (allowedTargets != null && !allowedTargets.contains(targetPos)) {
+                LOGGER.debug("[Telegraph] schedule: target {} not selected by sender — SKIPPED", targetPos);
+                continue;
+            }
 
             // Filter by channel at scheduling time — the receiver must be on the same channel
             BlockEntity targetBe = level.getBlockEntity(targetPos);
@@ -78,14 +96,19 @@ public class MessageDeliverySystem {
             // Low quality (< 30) doubles the propagation delay
             long deliverAt = currentTick + (quality < 30 ? baseDelay * 2 : baseDelay);
 
-            QUEUE.add(new ScheduledDelivery(level.dimension(), targetPos, message, sender,
+            pending.add(new ScheduledDelivery(level.dimension(), targetPos, message, sender,
                     senderStation, channel, deliverAt, quality));
             LOGGER.debug("[Telegraph] schedule: target {} ch {} dist {} quality {} — SCHEDULED at tick {}",
                     targetPos, targetChannel, distance, quality, deliverAt);
-            scheduled++;
         }
 
-        LOGGER.debug("[Telegraph] schedule: {} delivery(s) queued from {} on ch {}", scheduled, senderPos, channel);
+        if (pending.isEmpty()) return 0;
+        // GUI sends pay per selected recipient; broadcasts pay per valid target.
+        int paperCost = allowedTargets == null ? pending.size() : allowedTargets.size();
+        if (!TelegraphPaperSupply.consumePaper(level, senderPos, paperCost)) return -1;
+        QUEUE.addAll(pending);
+        LOGGER.debug("[Telegraph] schedule: {} delivery(s) queued from {} on ch {}", pending.size(), senderPos, channel);
+        return pending.size();
     }
 
     @SubscribeEvent
@@ -117,7 +140,7 @@ public class MessageDeliverySystem {
                         delivery.channel, currentTick);
                 tbe.setLastSignalQuality(delivery.quality);
                 level.playSound(null, delivery.targetPos,
-                        ModSounds.TELEGRAPH_BEEP.get(), SoundSource.BLOCKS, 1.0f, 0.8f);
+                        ModSounds.TELEGRAPH_BEEP.get(), SoundSource.BLOCKS, ModSounds.TELEGRAPH_VOLUME, 0.8f);
             } else {
                 LOGGER.debug("[Telegraph] delivery target {} is gone or not a TelegraphBlockEntity — discarded",
                         delivery.targetPos);

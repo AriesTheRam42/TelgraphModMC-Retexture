@@ -7,10 +7,11 @@ import com.reis.telegraph.blocks.RelayStationBlock;
 import com.reis.telegraph.blocks.TelegraphBlockEntity;
 import com.reis.telegraph.blocks.TelegraphPoleBlock;
 import com.reis.telegraph.config.TelegraphConfig;
-import com.reis.telegraph.network.NetworkManager;
+import com.reis.telegraph.network.TelegraphTarget;
 import com.reis.telegraph.registration.ModSounds;
 import com.reis.telegraph.system.MessageDeliverySystem;
-import com.reis.telegraph.system.SignalQualityCalculator;
+import com.reis.telegraph.system.TelegraphRouting;
+import com.reis.telegraph.system.TelegraphPaperSupply;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
@@ -23,7 +24,10 @@ import net.minecraftforge.network.NetworkEvent;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -41,24 +45,28 @@ public class SendMessagePacket {
     private final BlockPos pos;
     private final String message;
     private final int channel;
+    private final List<BlockPos> targets;
 
-    public SendMessagePacket(BlockPos pos, String message, int channel) {
+    public SendMessagePacket(BlockPos pos, String message, int channel, List<BlockPos> targets) {
         this.pos = pos;
         this.message = message;
         this.channel = channel;
+        this.targets = targets == null ? List.of() : targets;
     }
 
     public static void encode(SendMessagePacket pkt, FriendlyByteBuf buf) {
         buf.writeBlockPos(pkt.pos);
         buf.writeUtf(pkt.message, 256);
         buf.writeVarInt(pkt.channel);
+        TelegraphTarget.encodePositions(pkt.targets, buf);
     }
 
     public static SendMessagePacket decode(FriendlyByteBuf buf) {
         BlockPos pos = buf.readBlockPos();
         String message = buf.readUtf(256);
         int channel = buf.readVarInt();
-        return new SendMessagePacket(pos, message, channel);
+        List<BlockPos> targets = TelegraphTarget.decodePositions(buf);
+        return new SendMessagePacket(pos, message, channel, targets);
     }
 
     public static void handle(SendMessagePacket pkt, Supplier<NetworkEvent.Context> ctx) {
@@ -106,6 +114,11 @@ public class SendMessagePacket {
                 return;
             }
 
+            if (!TelegraphPaperSupply.hasPaper(level, pkt.pos)) {
+                player.sendSystemMessage(Component.translatable("message.telegraph.no_paper"));
+                return;
+            }
+
             // Check that the machine has at least one cable/relay/pole connected
             boolean hasCable = false;
             for (Direction dir : Direction.values()) {
@@ -126,34 +139,65 @@ public class SendMessagePacket {
             // Update the machine's channel
             tbe.setChannel(pkt.channel);
 
-            LOGGER.debug("[Telegraph] SendMessagePacket: scheduling delivery from {} on ch {}", pkt.pos, pkt.channel);
+            // Remember the routing the player picked, so it survives closing the GUI
+            Set<BlockPos> requested = new HashSet<>(pkt.targets);
+            tbe.setSelectedTargets(requested);
 
-            // Schedule delivery to connected machines
-            MessageDeliverySystem.schedule(level, pkt.pos, pkt.message,
-                    player.getName().getString(), tbe.getStationName(), pkt.channel, currentTick);
+            List<TelegraphTarget> reachable = TelegraphRouting.collectTargets(level, pkt.pos, tbe);
+            if (reachable.isEmpty()) {
+                LOGGER.debug("[Telegraph] SendMessagePacket: no reachable machines from {}", pkt.pos);
+                player.sendSystemMessage(Component.translatable("message.telegraph.no_targets"));
+                return;
+            }
+
+            // Only positions that are both selected and actually reachable get a delivery
+            Set<BlockPos> allowed = new HashSet<>();
+            for (TelegraphTarget target : reachable) {
+                if (requested.contains(target.pos())) {
+                    allowed.add(target.pos());
+                }
+            }
+            if (allowed.isEmpty()) {
+                LOGGER.debug("[Telegraph] SendMessagePacket: no recipient selected at {}", pkt.pos);
+                player.sendSystemMessage(Component.translatable("message.telegraph.no_recipient"));
+                return;
+            }
+
+            LOGGER.debug("[Telegraph] SendMessagePacket: scheduling delivery from {} on ch {} to {} target(s)",
+                    pkt.pos, pkt.channel, allowed.size());
+
+            // Schedule delivery to the selected machines only
+            int delivered = MessageDeliverySystem.schedule(level, pkt.pos, pkt.message,
+                    player.getName().getString(), tbe.getStationName(), pkt.channel,
+                    currentTick, allowed);
+
+            if (delivered < 0) {
+                player.sendSystemMessage(Component.translatable("message.telegraph.not_enough_paper"));
+                return;
+            }
+            if (delivered == 0) {
+                player.sendSystemMessage(Component.translatable("message.telegraph.none_delivered"));
+                return;
+            }
 
             // Sender feedback: sound + chat with quality info
             level.playSound(null, pkt.pos, ModSounds.TELEGRAPH_BEEP.get(),
-                    SoundSource.BLOCKS, 0.5f, 1.2f);
+                    SoundSource.BLOCKS, ModSounds.TELEGRAPH_VOLUME, 1.2f);
 
-            // Compute best quality among reachable targets on this channel for feedback
-            Map<BlockPos, NetworkManager.NetworkPath> paths =
-                    NetworkManager.findConnectedMachinesWithPaths(level, pkt.pos);
-            int bestQuality = paths.entrySet().stream()
-                    .filter(e -> !e.getKey().equals(pkt.pos))
-                    .filter(e -> {
-                        var be2 = level.getBlockEntity(e.getKey());
-                        return be2 instanceof TelegraphBlockEntity t && t.getChannel() == pkt.channel;
-                    })
-                    .mapToInt(e -> SignalQualityCalculator.calculateQuality(e.getValue()))
+            // Best quality among the selected targets that are on this channel
+            int bestQuality = reachable.stream()
+                    .filter(t -> allowed.contains(t.pos()))
+                    .filter(t -> t.channel() == pkt.channel)
+                    .mapToInt(TelegraphTarget::quality)
                     .max().orElse(0);
 
             tbe.setLastSignalQuality(bestQuality);
 
             if (TelegraphConfig.ENABLE_QUALITY_EFFECTS.get()) {
-                player.sendSystemMessage(Component.translatable("message.telegraph.sent_quality", bestQuality));
+                player.sendSystemMessage(Component.translatable(
+                        "message.telegraph.sent_to_quality", delivered, bestQuality));
             } else {
-                player.sendSystemMessage(Component.translatable("message.telegraph.sent"));
+                player.sendSystemMessage(Component.translatable("message.telegraph.sent_to", delivered));
             }
 
             COOLDOWNS.put(uuid, currentTick);

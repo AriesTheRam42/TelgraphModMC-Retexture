@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.reis.telegraph.blocks.TelegraphBlock;
 import com.reis.telegraph.blocks.TelegraphBlockEntity;
 import com.reis.telegraph.system.MessageDeliverySystem;
+import com.reis.telegraph.system.TelegraphPaperSupply;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import com.reis.telegraph.registration.ModSounds;
 import net.minecraft.commands.CommandSourceStack;
@@ -72,15 +73,29 @@ public class TelegraphCommand {
                 return 0;
             }
 
+            if (!TelegraphPaperSupply.hasPaper(level, senderMachine)) {
+                player.sendSystemMessage(Component.translatable("message.telegraph.no_paper"));
+                return 0;
+            }
+
             BlockEntity machineBe = level.getBlockEntity(senderMachine);
             String stationName = (machineBe instanceof TelegraphBlockEntity tbe)
                     ? tbe.getStationName() : "";
 
-            MessageDeliverySystem.schedule(level, senderMachine, message,
+            int delivered = MessageDeliverySystem.schedule(level, senderMachine, message,
                     player.getName().getString(), stationName, channel, currentTick);
 
+            if (delivered < 0) {
+                player.sendSystemMessage(Component.translatable("message.telegraph.not_enough_paper"));
+                return 0;
+            }
+            if (delivered == 0) {
+                player.sendSystemMessage(Component.translatable("message.telegraph.none_delivered"));
+                return 0;
+            }
+
             level.playSound(null, senderMachine, ModSounds.TELEGRAPH_BEEP.get(),
-                    SoundSource.BLOCKS, 0.5f, 1.2f);
+                    SoundSource.BLOCKS, ModSounds.TELEGRAPH_VOLUME, 1.2f);
 
             player.sendSystemMessage(Component.translatable("message.telegraph.sent"));
             COOLDOWNS.put(uuid, currentTick);
