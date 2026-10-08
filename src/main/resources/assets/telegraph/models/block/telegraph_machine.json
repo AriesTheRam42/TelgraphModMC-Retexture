@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "Relay",
-		"particle": "Relay"
+  		"0": "telegraph:block/telegraph_machine_texture",
+  		"particle": "telegraph:block/telegraph_machine_texture"
 	},
 	"elements": [
 		{
